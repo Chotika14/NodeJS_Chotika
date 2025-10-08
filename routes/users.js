@@ -4,6 +4,8 @@ var userSchema = require('../models/user.models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+
+
 //------------------- register -----------------------------------------
 
 router.post('/register', async (req, res) => {
@@ -25,7 +27,7 @@ router.post('/register', async (req, res) => {
     });
 
     await user.save(); //บันทึกลงฐานข้อมูล
-    
+
     // สร้างแอคผ่านเเล้วแสดงข้อมูล
     res.status(201).json({
       status: 201,
@@ -46,18 +48,18 @@ router.post('/login', async (req, res) => {
 
     const user = await userSchema.findOne({ name }); //ตรวจสอบว่ามี user อยู่ในระบบหรือไม่
     if (!user) {
-      return res.status(401).json({ status: '401', message: 'Invalid username or password' });
+      return res.status(401).json({ status: '401', message: 'Invalid username or password', data: null });
     }
 
     //สอบว่า password ที่ผู้ใช้กรอกตอน login ตรงกับ password ที่เก็บ (hash) ใน database หรือไม่
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ status: '401', message: 'Invalid username or password' });
+      return res.status(401).json({ status: '401', message: 'Invalid username or password', data: null });
     }
 
     // ตรวจสอบว่า user ได้รับการอนุมัติหรือไม่
     if (!user.approved) {
-      return res.status(401).json({ status: '401', message: 'User not approved yet' });
+      return res.status(401).json({ status: '401', message: 'User not approved yet',  data: null });
     }
 
     // สร้าง token ใหม่
@@ -72,7 +74,7 @@ router.post('/login', async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ status: '500', message: 'Server error' });
+    res.status(500).json({ status: '500', message: 'Server error' ,data: null});
   }
 });
 

@@ -3,6 +3,7 @@ const router = express.Router();
 const productsSchema = require('../models/product.models'); // โมเดลสินค้า
 const Order = require('../models/order.models'); // โมเดล Order
 const tokenMiddleware = require('../middleware/token.middleware'); // Middleware ตรวจสอบ token
+const mongoose = require('mongoose'); // 
 
 
 // GET all products
@@ -26,7 +27,7 @@ router.get('/', tokenMiddleware, async (req, res) => {
 
 // --------------- POST สร้างสินค้าใหม่ -------------
 
-router.post('/', async (req, res) => {
+router.post('/', tokenMiddleware,async (req, res) => {
     try {
         console.log("Body:", req.body); // debug ดูว่ามีค่ามั้ย
 
@@ -52,7 +53,7 @@ router.post('/', async (req, res) => {
 });
 
 // -------------- PUT อัพเดต/แก้ไข สินค้าโดย ID -------
-router.put('/:id', async (req, res) => {
+router.put('/:id', tokenMiddleware, async (req, res) => {
     try {
         let { id } = req.params;
         let { nameproduct, price, stock } = req.body;
@@ -89,7 +90,7 @@ router.put('/:id', async (req, res) => {
 
 // ---------- DELETE product by ID --------
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id',tokenMiddleware, async (req, res) => {
     try {
         const { id } = req.params; // รับค่า id จาก URL
 
@@ -124,20 +125,38 @@ router.delete('/:id', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        let { id } = req.params;
+        const { id } = req.params;
 
-        const products = await productsSchema.findById(id); // ดึงสินค้าตาม id
+        // ตรวจสอบว่า id เป็น ObjectId ของ MongoDB หรือไม่
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: 'Invalid product ID'
+            });
+        }
+
+        const product = await productsSchema.findById(id); // ดึงสินค้าตาม id
+
+        if (!product) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
         res.status(200).json({
             status: 200,
-            success: "success",
-            data: products
+            success: true,
+            data: product
         });
     } catch (err) {
         console.error(err);
         res.status(500).json({
             status: 500,
             success: false,
-            message: 'Failed to fetch products'
+            message: 'Failed to fetch product'
         });
     }
 });
